@@ -1,25 +1,30 @@
 from PIL import Image
 import numpy as np
 
-def process_image(image):
+inp_image = Image.open("C:/path/to/image.png")
+out_xyz = "C:/path/to/pointcloud.xyz"
+black_threshold = 5 #cull near-black pixels
+
+#Iterate all pixels, write points if color > black_threshold
+def rgb2cloud(image):
     pixels = image.getdata()
     points = []
     for i, pixel in enumerate(pixels):
-        # Unpack the RGB values
-        red, green, blue = pixel
         x = i % image.width
         y = i // image.width
-
         for color in pixel:
-            if color > 10:
+            if color > black_threshold:
                 points.append([x, y, color])
-
     return points
 
-inp_image = Image.open("C:/Users/Timothy/Downloads/pm0006.png")
-cloud = process_image(inp_image)
+#Make cloud
+cloud = rgb2cloud(inp_image)
 data_array = np.array(cloud)
-data_array[:, 2] = data_array[:, 2] * (inp_image.size[0]/255)
-with open("C:/A1111/Sheeter/Res/res.xyz", 'w') as file:
+
+#Z axis was squished to 255; try to scale it back to normal
+data_array[:, 2] = data_array[:, 2] * (inp_image.width/255)
+
+#Write to xyz file
+with open(out_xyz, 'w') as file:
     for array in data_array:
         file.write(f"{array[0]} {array[1]} {array[2]}\n")
